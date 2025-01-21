@@ -1,5 +1,7 @@
-import { useState, useId } from "react";
+import { useState } from "react";
 
+import { createColumnDefs } from "./helpers/createColumnDefs";
+import { SearchBox } from "./components/SearchBox";
 import { usePromise } from "./usePromise";
 import GridExample from "./GridExample";
 import Wrapper from "./Remote";
@@ -20,54 +22,42 @@ export default function App() {
 
   const columnDefs = createColumnDefs(reports);
 
+  // change rowData passed to grid using search value
+  function searchByEachProperty() {
+    const array = Array.isArray(reports) ? reports : [];
+
+    return array.filter((row) => {
+      const keys = Object.keys(row);
+
+      for (const key of keys) {
+        const value = row[key];
+
+        if (String(value).toLowerCase().includes(search.toLowerCase())) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+  }
+
+  const filteredReports = searchByEachProperty();
+
   // filter reports by search
   // search should be based on report descriptions
   // handle empty search differently
 
   return (
-    <Wrapper heading={"Search example"}>
+    <Wrapper heading="Search example">
       <SearchBox
         onChange={setSearch}
-        label="Description"
+        label="Quick search"
         value={search}
       ></SearchBox>
-      <GridExample columnDefs={columnDefs} rowData={reports}></GridExample>
+      <GridExample
+        rowData={filteredReports}
+        columnDefs={columnDefs}
+      ></GridExample>
     </Wrapper>
   );
-}
-
-function SearchBox({
-  placeholder = "Placeholder",
-  label = "Label",
-  type = "text",
-  value = "",
-  onChange,
-}) {
-  const id = useId();
-
-  const handleChange = (e) => onChange(e.target.value);
-
-  return (
-    <div>
-      <label className="form-label" htmlFor={id}>
-        {label}
-      </label>
-      <input
-        placeholder={placeholder}
-        className="form-control"
-        onChange={handleChange}
-        value={value}
-        type={type}
-        id={id}
-      />
-    </div>
-  );
-}
-
-function createColumnDefs(rows) {
-  const firstRow = Array.isArray(rows) ? rows[0] : {};
-
-  const fields = Object.keys(firstRow);
-
-  return fields.map((field) => ({ field }));
 }
