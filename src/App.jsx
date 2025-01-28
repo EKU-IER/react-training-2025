@@ -1,63 +1,40 @@
-import { useState } from "react";
+import { useMemo } from "react";
 
 import { createColumnDefs } from "./helpers/createColumnDefs";
-import { SearchBox } from "./components/SearchBox";
+import { getUniqueValues } from "./helpers/getUniqueValues";
 import { usePromise } from "./usePromise";
 import GridExample from "./GridExample";
+import { url } from "./constants/url";
 import Wrapper from "./Remote";
 
-const reportsUrl =
-  "https://raw.githubusercontent.com/chancellor-w-whitaker/json-example/refs/heads/main/reports.json";
+function App() {
+  const rowData = usePromise(promise);
 
-const reportsPromise = fetch(reportsUrl).then((response) => response.json());
+  const uniqueValues = useMemo(() => getUniqueValues(rowData), [rowData]);
 
-// create dropdown filters with a different dataset
+  console.log("Unique values", uniqueValues);
 
-// implement search with data page dataset
+  const columnDefs = createColumnDefs(rowData);
 
-export default function App() {
-  const [search, setSearch] = useState("");
+  // get every unique value of each column in rows
 
-  const reports = usePromise(reportsPromise);
-
-  const columnDefs = createColumnDefs(reports);
-
-  // change rowData passed to grid using search value
-  function searchByEachProperty() {
-    const array = Array.isArray(reports) ? reports : [];
-
-    return array.filter((row) => {
-      const keys = Object.keys(row);
-
-      for (const key of keys) {
-        const value = row[key];
-
-        if (String(value).toLowerCase().includes(search.toLowerCase())) {
-          return true;
-        }
-      }
-
-      return false;
-    });
-  }
-
-  const filteredReports = searchByEachProperty();
-
-  // filter reports by search
-  // search should be based on report descriptions
-  // handle empty search differently
+  // console.log("Columns", columnDefs);
 
   return (
-    <Wrapper heading="Search example">
-      <SearchBox
-        onChange={setSearch}
-        label="Quick search"
-        value={search}
-      ></SearchBox>
-      <GridExample
-        rowData={filteredReports}
-        columnDefs={columnDefs}
-      ></GridExample>
+    <Wrapper heading="Factbook summer data">
+      <GridExample columnDefs={columnDefs} rowData={rowData}></GridExample>
     </Wrapper>
   );
 }
+
+const numericColumns = [
+  "FTE_Basic",
+  "FTE_CPE",
+  "FTE_IPEDS",
+  "FTE_Moodys",
+  "total",
+];
+
+const promise = fetch(url).then((response) => response.json());
+
+export default App;
